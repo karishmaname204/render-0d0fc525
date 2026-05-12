@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "render-marketplace",
+  "version": "0.1.1",
+  "description": "Claude Code marketplace for Render",
+  "owner": {
+    "name": "Conxa"
+  },
+  "plugins": [
+    {
+      "name": "render",
+      "description": "Conxa plugin for Render",
+      "version": "0.1.1",
+      "source": "./",
+      "category": "productivity",
+      "repository": "https://github.com/karishmaname204/render-0d0fc525"
+    }
+  ]
+}

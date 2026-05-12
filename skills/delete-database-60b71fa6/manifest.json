@@ -1,0 +1,16 @@
+{
+  "name": "delete-database-60b71fa6",
+  "description": "Run the Delete Database workflow.",
+  "version": "1.0.0",
+  "entry": {
+    "execution": "./execution.json",
+    "recovery": "./recovery.json",
+    "input": "./input.json"
+  },
+  "inputs": [
+    {
+      "name": "service_name",
+      "type": "string"
+    }
+  ]
+}

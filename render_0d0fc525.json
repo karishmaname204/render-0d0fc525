@@ -1,0 +1,12 @@
+{
+  "plugin": "render_0d0fc525",
+  "version": "1.0.0",
+  "skills": [
+    {
+      "name": "auth_login",
+      "description": "Render login",
+      "execution": "skills/auth_login/execution.json",
+      "recovery": "skills/auth_login/recovery.json"
+    }
+  ]
+}

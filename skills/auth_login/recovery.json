@@ -1,0 +1,117 @@
+{
+  "steps": [
+    {
+      "step_id": 2,
+      "intent": "fill_name",
+      "target": {
+        "text": "name",
+        "role": "textbox"
+      },
+      "anchors": [
+        {
+          "text": "name",
+          "priority": 2
+        }
+      ],
+      "fallback": {
+        "text_variants": [
+          "name"
+        ],
+        "role": "textbox"
+      },
+      "selector_context": {
+        "primary": "input[name=email]",
+        "alternatives": [
+          "input[name=\"name\"]"
+        ]
+      },
+      "visual_metadata": {
+        "step_id": 2,
+        "source": "stored_step_visual",
+        "available": false
+      },
+      "recovery_metadata": {
+        "mode": "tiered",
+        "action_type": "fill",
+        "generated_by": "skill_pack_builder"
+      }
+    },
+    {
+      "step_id": 3,
+      "intent": "fill_name",
+      "target": {
+        "text": "name",
+        "role": "textbox"
+      },
+      "anchors": [
+        {
+          "text": "name",
+          "priority": 2
+        }
+      ],
+      "fallback": {
+        "text_variants": [
+          "name"
+        ],
+        "role": "textbox"
+      },
+      "selector_context": {
+        "primary": "input[name=password]",
+        "alternatives": [
+          "input[name=\"name\"]"
+        ]
+      },
+      "visual_metadata": {
+        "step_id": 3,
+        "source": "stored_step_visual",
+        "available": false
+      },
+      "recovery_metadata": {
+        "mode": "tiered",
+        "action_type": "fill",
+        "generated_by": "skill_pack_builder"
+      }
+    },
+    {
+      "step_id": 4,
+      "intent": "click_sign_in",
+      "target": {
+        "text": "Sign in",
+        "role": ""
+      },
+      "anchors": [
+        {
+          "text": "Login",
+          "priority": 1
+        },
+        {
+          "text": "Sign in",
+          "priority": 2
+        }
+      ],
+      "fallback": {
+        "text_variants": [
+          "Sign in",
+          "Log in"
+        ],
+        "role": ""
+      },
+      "selector_context": {
+        "primary": "text=Sign in",
+        "alternatives": [
+          "text=\"Sign in\""
+        ]
+      },
+      "visual_metadata": {
+        "step_id": 4,
+        "source": "stored_step_visual",
+        "available": false
+      },
+      "recovery_metadata": {
+        "mode": "tiered",
+        "action_type": "click",
+        "generated_by": "skill_pack_builder"
+      }
+    }
+  ]
+}
