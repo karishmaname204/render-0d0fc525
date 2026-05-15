@@ -1,8 +1,5 @@
-# Conxa plugin — these are local-only and must never be committed
 auth/auth.json
+generated/
 node_modules/
-.venv/
-execution_log.jsonl
-data/runs/
-*.local.json
-.env
+.DS_Store
+*.log

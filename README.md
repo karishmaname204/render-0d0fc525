@@ -4,30 +4,13 @@ Automate [https://dashboard.render.com/login](https://dashboard.render.com/login
 
 ## Install
 
-Add to **Claude Code** (Settings → MCP Servers → Add from GitHub):
+Add to **Claude Code** via the marketplace:
 
 ```
-github.com/<your-org>/render_0d0fc525
+/plugin marketplace add github.com/<your-org>/render
 ```
 
-Or add manually to `.claude/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "render_0d0fc525": {
-      "command": "node",
-      "args": ["/path/to/render_0d0fc525/server.js"]
-    }
-  }
-}
-```
-
-After installing, ask Claude to set up your session:
-
-> "Call bootstrap_auth to set up Render"
-
-Claude will open a browser — log in manually, and your session is saved locally.
+The shared Conxa runtime installs automatically on first use.
 
 ## Available Skills
 
@@ -35,9 +18,9 @@ Claude will open a browser — log in manually, and your session is saved locall
 
 ## How It Works
 
-This plugin runs as a local MCP server. When Claude calls a skill tool, Chrome
-launches on your machine, executes the recorded workflow, and returns a result
-and screenshot. Your auth session (`auth/auth.json`) stays on your machine
+This plugin works with the shared `conxa` MCP server. When Claude calls a skill,
+a real Chromium browser opens on your machine, executes the recorded workflow,
+and returns a result and screenshot. Your auth session stays on your machine
 and is never uploaded anywhere.
 
 ---

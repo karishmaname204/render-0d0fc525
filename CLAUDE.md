@@ -1,13 +1,11 @@
 # Render Plugin — Claude Instructions
 
-## ⚠️ CRITICAL EXECUTION RULES
+## ⚠️ MANDATORY RULES
 
-**NEVER use any of these tools:**
-- `mcp__Claude_in_Chrome__*` (Chrome MCP browser tools)
-- `computer_use` or `computer-use`
-- Any built-in browser navigation or screenshot tools
+**NEVER use:** `computer_use`, `computer-use`, `mcp__Claude_in_Chrome__*`, or any built-in browser tool.
+**The shared `conxa` MCP server IS the browser.** It opens a real visible Chromium window and executes all steps. You never need to navigate anywhere yourself.
+**NEVER ask the user about authentication.** Never ask "are you logged in?", "do you need to authenticate?", or anything about sessions. Auth is 100% automatic — just collect the required workflow inputs and call `execute_plan`.
 
-**ALWAYS use this plugin's MCP tools to execute browser automation.**
 
 ---
 
@@ -15,11 +13,39 @@
 
 | Tool | Purpose |
 |------|---------|
-| `bootstrap_auth` | Open browser for user to log in and save session |
-| `list_skills` | List all available skills with metadata |
-| `read_skill_files(slug)` | Get execution.json + recovery.json for a skill |
-| `execute_plan(steps, inputs)` | Run a merged multi-skill plan via Playwright |
-| Individual skill tools | Shortcut to run a single skill directly |
+| `list_skills` | List available skills (pass `plugin: "render"` to filter to this plugin) |
+| `read_skill_files(slug, plugin?)` | Read SKILL.md, required inputs, and execution steps |
+| `execute_plan(skills, inputs?)` | Run a visible Playwright browser — auth handled transparently |
+
+---
+
+## Authentication
+
+Authentication is **fully transparent** — it happens automatically before every workflow.
+
+- The runtime checks `~/.conxa/plugins/render/auth/auth.json` before executing any workflow
+- If a valid session exists → browser opens already logged in → workflow runs
+- If no session or session expired → a visible browser opens at `https://dashboard.render.com/login` → user logs in manually → session is saved → browser relaunches authenticated → workflow continues automatically
+- **Never pass auth steps into `execute_plan`** — login is handled by the runtime, not the workflow
+
+---
+
+## Exact Flow — Follow This Every Time
+
+### Step 1: Discover skills
+Call `list_skills({ plugin: "render" })` to find the right skill for the user's request. Then call `read_skill_files` to get the full execution plan.
+
+### Step 2: Collect inputs — DO NOT SKIP
+The `read_skill_files` response has an `instruction` field. If it says **"STOP — ask the user for: X"**, check first whether the user already provided X in their message. If yes, use it directly. If no, ask.
+
+### Step 3: Execute
+```
+execute_plan({
+  skills: [{ plugin: "render", slug: "<skill-slug>", inputs: { key: "value" } }]
+})
+```
+
+Auth is handled internally. If the session is missing or expired, a login browser opens automatically — the user logs in and the workflow continues without any extra steps from you.
 
 ---
 
@@ -28,72 +54,3 @@
 - `delete-database-60b71fa6`
 
 ---
-
-## Execution Flow
-
-When the user asks you to do something on https://dashboard.render.com/login:
-
-### Step 1: Identify Skills
-Determine which skills are needed from the list above.
-Example: "Delete my database" → needs: `bootstrap_auth` (if not authed) + `delete_database`
-
-### Step 2: Load Skill Data
-For each required skill, call:
-```
-read_skill_files(slug: "<skill-slug>")
-```
-This returns `execution` (steps array) and `recovery` (per-step fallbacks).
-
-### Step 3: Merge into a Plan
-Combine the steps from all skills into ONE sequence:
-- Login steps come first
-- Remove duplicate navigation (if multiple skills navigate to the same page, keep only one)
-- Annotate each step with its recovery info from the recovery data
-- Inject `{{input_key}}` placeholders with actual user-provided values
-
-### Step 4: Execute the Plan
-Call:
-```
-execute_plan(steps: [...merged steps...], inputs: {"key": "value"})
-```
-The plugin will run a visible Playwright browser and execute all steps. A screenshot is returned on success.
-
-### Step 5: Handle Failures
-If `execute_plan` returns an error:
-- Check the error message for which step failed
-- The step may have recovery alternatives (fallback_selectors, candidates)
-- If recovery fails, reload skill files and adjust the plan
-- Modify selectors or step order and retry `execute_plan`
-- Continue until success or maximum recovery attempts exhausted
-
----
-
-## Complete Example Flow
-
-**User:** "Delete my database conxa-db"
-
-**You do:**
-1. Call `list_skills` → see available skills
-2. Identify needed skills: `auth_login`, `delete_database`
-3. Call `read_skill_files("auth_login")` → get login steps + recovery
-4. Call `read_skill_files("delete_database")` → get delete steps + recovery
-5. Merge: [login steps] + [navigate to DB] + [delete DB] + [confirm delete]
-6. Call `execute_plan(steps=[merged], inputs={"database": "conxa-db"})`
-7. Browser opens, executes all steps, closes
-8. Return screenshot confirming deletion
-
----
-
-## Authentication
-
-If you get: *"Session expired. Ask Claude to call bootstrap_auth first."*
-→ Call `bootstrap_auth` (opens a visible browser for the user to log in)
-→ Once the user logs in and the browser closes, call `execute_plan` again
-
----
-
-## Input Parameters
-
-When calling `read_skill_files`, the response includes each step's `inputs` field.
-Look for `{{key}}` placeholders in `value` fields — those are the required inputs to inject.
-Always provide `inputs` to `execute_plan` with actual values, not placeholders.

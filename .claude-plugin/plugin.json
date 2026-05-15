@@ -1,10 +1,13 @@
 {
   "name": "render",
+  "version": "0.2.0",
   "description": "Conxa plugin for Render",
-  "version": "0.1.1",
-  "author": {
-    "name": "Conxa"
-  },
-  "license": "MIT",
-  "repository": "https://github.com/karishmaname204/render-0d0fc525"
+  "mcpServers": {
+    "conxa": {
+      "command": "node",
+      "args": [
+        ".claude-plugin/bootstrap.js"
+      ]
+    }
+  }
 }
