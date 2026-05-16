@@ -106,10 +106,10 @@ function copyDirSync(src, dst) {
 function init() {
   if (fs.existsSync(VERSION_JSON)) {
     const v = JSON.parse(fs.readFileSync(VERSION_JSON, "utf8"));
-    console.log("[conxa] Runtime already bootstrapped at", RUNTIME_DIR, `(v${v.version})`);
+    process.stderr.write(`[conxa] Runtime already bootstrapped at ${RUNTIME_DIR} (v${v.version})\n`);
     return;
   }
-  console.log("[conxa] Bootstrapping runtime at", RUNTIME_DIR, "...");
+  process.stderr.write(`[conxa] Bootstrapping runtime at ${RUNTIME_DIR} ...\n`);
 
   const srcDir = path.join(__dirname, "..", "runtime");
   fs.mkdirSync(RUNTIME_DIR, { recursive: true });
@@ -118,11 +118,11 @@ function init() {
     if (fs.existsSync(src)) fs.copyFileSync(src, path.join(RUNTIME_DIR, file));
   }
 
-  console.log("[conxa] Running npm install...");
-  execSync("npm install --prefer-offline --silent", { cwd: RUNTIME_DIR, stdio: "inherit" });
+  process.stderr.write("[conxa] Running npm install...\n");
+  execSync("npm install --prefer-offline --silent", { cwd: RUNTIME_DIR, stdio: ["ignore", "pipe", "inherit"] });
 
-  console.log("[conxa] Installing Playwright Chromium...");
-  execSync("npx playwright install chromium", { cwd: RUNTIME_DIR, stdio: "inherit" });
+  process.stderr.write("[conxa] Installing Playwright Chromium...\n");
+  execSync("npx playwright install chromium", { cwd: RUNTIME_DIR, stdio: ["ignore", "pipe", "inherit"] });
 
   const pkg = fs.existsSync(path.join(RUNTIME_DIR, "package.json"))
     ? JSON.parse(fs.readFileSync(path.join(RUNTIME_DIR, "package.json"), "utf8"))
@@ -137,7 +137,10 @@ function init() {
   updateGlobalClaudeMd({});
   regenerateIndex({});
 
-  console.log("[conxa] Bootstrap complete.");
+  // Write bootstrap flag so subsequent plugin installs skip re-init
+  fs.writeFileSync(path.join(CONXA_HOME, ".bootstrapped"), "1", "utf8");
+
+  process.stderr.write("[conxa] Bootstrap complete.\n");
 }
 
 // ─── install ──────────────────────────────────────────────────────────────────
@@ -158,7 +161,7 @@ function install(pluginDir) {
   const slug    = cfg.slug;
   const destDir = path.join(PLUGINS_DIR, slug);
 
-  console.log(`[conxa] Installing plugin '${slug}' from ${absDir}...`);
+  process.stderr.write(`[conxa] Installing plugin '${slug}' from ${absDir}...\n`);
   fs.mkdirSync(destDir, { recursive: true });
 
   // Copy plugin manifest
@@ -201,7 +204,7 @@ function install(pluginDir) {
   updateGlobalClaudeMd(reg);
   regenerateIndex(reg);
 
-  console.log(`[conxa] Plugin '${slug}' installed. Skills: ${skillsList.map(s => s.slug).join(", ")}`);
+  process.stderr.write(`[conxa] Plugin '${slug}' installed. Skills: ${skillsList.map(s => s.slug).join(", ")}\n`);
   return entry;
 }
 
@@ -212,7 +215,7 @@ function uninstall(slug) {
   const destDir = path.join(PLUGINS_DIR, slug);
   if (fs.existsSync(destDir)) {
     fs.rmSync(destDir, { recursive: true, force: true });
-    console.log(`[conxa] Removed plugin directory: ${destDir}`);
+    process.stderr.write(`[conxa] Removed plugin directory: ${destDir}\n`);
   }
   const reg = readRegistry();
   if (reg[slug]) {
@@ -220,9 +223,9 @@ function uninstall(slug) {
     writeRegistry(reg);
     updateGlobalClaudeMd(reg);
     regenerateIndex(reg);
-    console.log(`[conxa] Removed '${slug}' from registry`);
+    process.stderr.write(`[conxa] Removed '${slug}' from registry\n`);
   } else {
-    console.log(`[conxa] Plugin '${slug}' was not in registry`);
+    process.stderr.write(`[conxa] Plugin '${slug}' was not in registry\n`);
   }
 }
 
@@ -232,11 +235,11 @@ function list() {
   const reg = readRegistry();
   const entries = Object.values(reg);
   if (entries.length === 0) {
-    console.log("[conxa] No plugins installed.");
+    process.stderr.write("[conxa] No plugins installed.\n");
     return;
   }
   for (const e of entries) {
-    console.log(`  ${e.slug}  v${e.version}  skills: ${(e.skills || []).map(s => s.slug).join(", ")}`);
+    process.stderr.write(`  ${e.slug}  v${e.version}  skills: ${(e.skills || []).map(s => s.slug).join(", ")}\n`);
   }
 }
 
@@ -260,10 +263,10 @@ function discover() {
       install(marketDir);
       found++;
     } catch (e) {
-      console.error(`[conxa] discover: failed to install ${marketDir}: ${e.message}`);
+      process.stderr.write(`[conxa] discover: failed to install ${marketDir}: ${e.message}\n`);
     }
   }
-  if (found > 0) console.error(`[conxa] discover: installed ${found} new plugin(s)`);
+  if (found > 0) process.stderr.write(`[conxa] discover: installed ${found} new plugin(s)\n`);
 }
 
 // ─── CLI entry point ──────────────────────────────────────────────────────────
@@ -278,11 +281,11 @@ if (require.main === module) {
       case "list":      list();             break;
       case "discover":  discover();         break;
       default:
-        console.error("Usage: cli.js <init|install <dir>|uninstall <slug>|list|discover>");
+        process.stderr.write("Usage: cli.js <init|install <dir>|uninstall <slug>|list|discover>\n");
         process.exit(1);
     }
   } catch (e) {
-    console.error(`[conxa] Error: ${e.message}`);
+    process.stderr.write(`[conxa] Error: ${e.message}\n`);
     process.exit(1);
   }
 }

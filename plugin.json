@@ -1,9 +1,10 @@
 {
   "slug": "render",
   "name": "Render",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "target_url": "https://dashboard.render.com/login",
   "protected_url": "https://dashboard.render.com",
+  "protected_url_vars": [],
   "skills": [
     {
       "slug": "delete-database-60b71fa6",
@@ -12,8 +13,5 @@
   ],
   "compatibility": {
     "conxa_runtime": ">=1.0.0"
-  },
-  "metadata": {
-    "repository": "https://github.com/karishmaname204/render-0d0fc525"
   }
 }

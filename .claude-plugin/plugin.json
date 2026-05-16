@@ -1,13 +1,11 @@
 {
   "name": "render",
-  "version": "0.2.0",
+  "version": "0.1.0",
   "description": "Conxa plugin for Render",
   "mcpServers": {
     "conxa": {
       "command": "node",
-      "args": [
-        ".claude-plugin/bootstrap.js"
-      ]
+      "args": [".claude-plugin/bootstrap.js"]
     }
   }
 }

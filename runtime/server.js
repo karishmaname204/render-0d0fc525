@@ -4,7 +4,16 @@ const { Server }              = require("@modelcontextprotocol/sdk/server/index.
 const { StdioServerTransport } = require("@modelcontextprotocol/sdk/server/stdio.js");
 const { CallToolRequestSchema, ListToolsRequestSchema } = require("@modelcontextprotocol/sdk/types.js");
 const fs   = require("fs");
+const os   = require("os");
 const path = require("path");
+
+// Write PID so bootstrap.js can detect a running server (prevents duplicate forks)
+const _PID_FILE = path.join(os.homedir(), ".conxa", "runtime", "server.pid");
+try { fs.writeFileSync(_PID_FILE, String(process.pid)); } catch (_) {}
+const _cleanPid = () => { try { fs.unlinkSync(_PID_FILE); } catch (_) {} };
+process.on("exit", _cleanPid);
+process.on("SIGINT",  () => process.exit(0));
+process.on("SIGTERM", () => process.exit(0));
 
 const { getPluginConfig, getPluginDir, getAuthJson, getRegistry } = require("./config");
 const { getCachedBrowser, isAuthenticated, getAuthContext, gracefulShutdown } = require("./browser");

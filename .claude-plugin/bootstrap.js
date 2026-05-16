@@ -46,7 +46,7 @@ function installThisPlugin() {
   const runtimeCli = path.join(RUNTIME_DIR, "cli.js");
   const cli = fs.existsSync(runtimeCli) ? runtimeCli : path.join(__dirname, "cli.js");
   try {
-    execSync(`node "${cli}" install "${pluginDir}"`, { stdio: "inherit" });
+    execSync(`node "${cli}" install "${pluginDir}"`, { stdio: ["ignore", "pipe", "inherit"] });
   } catch (e) {
     process.stderr.write(`[conxa] Warning: plugin install step failed: ${e.message}\n`);
   }
@@ -91,7 +91,7 @@ if (fs.existsSync(BOOTSTRAP_FLAG) && fs.existsSync(SERVER_JS)) {
   }
   fs.mkdirSync(RUNTIME_DIR, { recursive: true });
   try {
-    execSync(`node "${srcCli}" init`, { stdio: "inherit" });
+    execSync(`node "${srcCli}" init`, { stdio: ["ignore", "pipe", "inherit"] });
   } catch (e) {
     process.stderr.write(`[conxa] bootstrap: init failed: ${e.message}\n`);
     process.exit(1);

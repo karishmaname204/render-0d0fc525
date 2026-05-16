@@ -38,6 +38,24 @@ function appendRecoveryEvent(event) {
   } catch (_) {}
 }
 
+// ─── Human-like pacing ────────────────────────────────────────────────────────
+// Delays mimic natural rhythm after each action type (ms ranges match trained operator pace)
+const HUMAN_DELAYS = {
+  click:    [300, 500],  // click → brief visual confirmation before moving
+  fill:     [400, 700],  // type → pause to review what was entered
+  type:     [400, 700],
+  select:   [350, 550],  // dropdown chosen → eye moves to next field
+  focus:    [200, 350],  // light focus tap, fast
+  scroll:   [300, 500],  // scroll → let content settle visually
+};
+
+function humanDelay(type) {
+  const range = HUMAN_DELAYS[type];
+  if (!range) return Promise.resolve();
+  const ms = range[0] + Math.random() * (range[1] - range[0]);
+  return new Promise(r => setTimeout(r, ms));
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function interpolate(value, inputs) {
@@ -109,23 +127,26 @@ async function executeStep(page, step, inputs) {
   if (type === "scroll") {
     if (sel) await page.locator(sel).first().scrollIntoViewIfNeeded({ timeout: 5000 }).catch(() => {});
     else     await page.evaluate(`window.scrollBy(${Number(step.delta_x)||0}, ${Number(step.delta_y)||0})`);
+    await humanDelay("scroll");
     return;
   }
   if (type === "fill" || type === "type") {
     await page.locator(sel).first().fill(interpolate(step.value || "", inputs), { timeout: 15000 });
+    await humanDelay(type);
     return;
   }
   if (type === "click") {
-    try { await page.locator(sel).first().click({ timeout: 15000 }); return; }
+    try { await page.locator(sel).first().click({ timeout: 15000 }); await humanDelay("click"); return; }
     catch (err) {
       if (String(err).includes("intercepts pointer events")) {
-        try { await page.locator(sel).last().click({ timeout: 10000 }); return; } catch (_) {}
+        try { await page.locator(sel).last().click({ timeout: 10000 }); await humanDelay("click"); return; } catch (_) {}
       }
       throw err;
     }
   }
   if (type === "select") {
     await page.locator(sel).first().selectOption(interpolate(step.value || "", inputs), { timeout: 15000 });
+    await humanDelay("select");
     return;
   }
   if (type === "focus") {
@@ -133,6 +154,7 @@ async function executeStep(page, step, inputs) {
       try { await page.locator(sel).first().click({ timeout: 5000 }); }
       catch (_) { await page.locator(sel).first().focus({ timeout: 10000 }).catch(() => {}); }
     }
+    await humanDelay("focus");
     return;
   }
   if (type === "check") {
