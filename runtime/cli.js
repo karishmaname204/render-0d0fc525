@@ -137,9 +137,6 @@ function init() {
   updateGlobalClaudeMd({});
   regenerateIndex({});
 
-  // Write bootstrap flag so subsequent plugin installs skip re-init
-  fs.writeFileSync(path.join(CONXA_HOME, ".bootstrapped"), "1", "utf8");
-
   console.log("[conxa] Bootstrap complete.");
 }
 
