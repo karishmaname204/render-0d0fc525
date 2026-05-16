@@ -57,12 +57,6 @@ function resolveSkill(pluginSlug, skillSlug, index) {
   return null;
 }
 
-// ─── Lazy discover on startup ─────────────────────────────────────────────────
-
-try {
-  require("./cli").discover();
-} catch (_) {}
-
 // ─── MCP server ───────────────────────────────────────────────────────────────
 
 const server = new Server(
