@@ -1,28 +1,19 @@
 #!/usr/bin/env node
 "use strict";
-/**
- * bootstrap.js — One-time shim that installs the shared Conxa runtime.
- *
- * Claude Code starts this file as the `conxa` MCP server on first install.
- * It bootstraps ~/.conxa/runtime/, registers the shared MCP server in
- * ~/.claude/settings.json, injects the Conxa discovery CLAUDE.md into the
- * global ~/.claude/CLAUDE.md, installs this plugin's data, then delegates
- * to the real server.js.
- */
 const fs   = require("fs");
 const os   = require("os");
 const path = require("path");
 const { execSync, fork } = require("child_process");
 
-const CONXA_HOME    = path.join(os.homedir(), ".conxa");
-const RUNTIME_DIR   = path.join(CONXA_HOME, "runtime");
-const SERVER_JS     = path.join(RUNTIME_DIR, "server.js");
-const VERSION_JSON  = path.join(RUNTIME_DIR, "version.json");
-const SETTINGS_JSON = path.join(os.homedir(), ".claude", "settings.json");
+const CONXA_HOME       = path.join(os.homedir(), ".conxa");
+const RUNTIME_DIR      = path.join(CONXA_HOME, "runtime");
+const SERVER_JS        = path.join(RUNTIME_DIR, "server.js");
+const PID_FILE         = path.join(RUNTIME_DIR, "server.pid");
+const BOOTSTRAP_FLAG   = path.join(CONXA_HOME, ".bootstrapped");
+const SETTINGS_JSON    = path.join(os.homedir(), ".claude", "settings.json");
 const GLOBAL_CLAUDE_MD = path.join(os.homedir(), ".claude", "CLAUDE.md");
 const CONXA_CLAUDE_MD  = path.join(CONXA_HOME, "CLAUDE.md");
 
-// Inject @~/.conxa/CLAUDE.md import into ~/.claude/CLAUDE.md (idempotent).
 function registerGlobalClaudeMd() {
   const importLine = `@${CONXA_CLAUDE_MD}`;
   let existing = "";
@@ -34,7 +25,6 @@ function registerGlobalClaudeMd() {
   process.stderr.write(`[conxa] Registered ~/.conxa/CLAUDE.md in ${GLOBAL_CLAUDE_MD}\n`);
 }
 
-// Patch ~/.claude/settings.json to register the shared conxa MCP server (idempotent).
 function registerGlobalMcp() {
   let settings = {};
   try { settings = JSON.parse(fs.readFileSync(SETTINGS_JSON, "utf8")); } catch (_) {}
@@ -51,7 +41,6 @@ function registerGlobalMcp() {
   }
 }
 
-// Install this plugin's data into ~/.conxa/plugins/ via the runtime CLI (idempotent).
 function installThisPlugin() {
   const pluginDir = path.join(__dirname, "..");
   const runtimeCli = path.join(RUNTIME_DIR, "cli.js");
@@ -63,19 +52,38 @@ function installThisPlugin() {
   }
 }
 
-function startServer() {
-  const child = fork(SERVER_JS, [], { stdio: "inherit" });
-  child.on("exit", code => process.exit(code || 0));
+function isServerRunning() {
+  if (!fs.existsSync(PID_FILE)) return false;
+  try {
+    const pid = parseInt(fs.readFileSync(PID_FILE, "utf8").trim(), 10);
+    if (isNaN(pid)) return false;
+    process.kill(pid, 0);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
-if (fs.existsSync(VERSION_JSON)) {
-  // Runtime already installed — register (idempotent), install plugin data, start.
+function startServer() {
+  if (isServerRunning()) {
+    process.stderr.write("[conxa] Shared runtime already running, plugin data installed.\n");
+    process.exit(0);
+    return;
+  }
+  const child = fork(SERVER_JS, [], { stdio: "inherit" });
+  try { fs.writeFileSync(PID_FILE, String(child.pid)); } catch (_) {}
+  child.on("exit", code => {
+    try { fs.unlinkSync(PID_FILE); } catch (_) {}
+    process.exit(code || 0);
+  });
+}
+
+if (fs.existsSync(BOOTSTRAP_FLAG) && fs.existsSync(SERVER_JS)) {
   registerGlobalMcp();
   registerGlobalClaudeMd();
   installThisPlugin();
   startServer();
 } else {
-  // First install: bootstrap runtime from the sibling cli.js.
   const srcCli = path.join(__dirname, "cli.js");
   if (!fs.existsSync(srcCli)) {
     process.stderr.write("[conxa] bootstrap: cli.js not found next to bootstrap.js\n");
@@ -89,7 +97,7 @@ if (fs.existsSync(VERSION_JSON)) {
     process.exit(1);
   }
   if (!fs.existsSync(SERVER_JS)) {
-    process.stderr.write("[conxa] bootstrap: server.js still not found after init\n");
+    process.stderr.write("[conxa] bootstrap: server.js not found after init\n");
     process.exit(1);
   }
   registerGlobalMcp();

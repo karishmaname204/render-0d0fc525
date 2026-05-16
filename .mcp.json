@@ -1,12 +1,1 @@
-{
-  "mcpServers": {
-    "render_0d0fc525": {
-      "command": "npm",
-      "args": [
-        "--prefix",
-        "${CLAUDE_PLUGIN_ROOT}",
-        "start"
-      ]
-    }
-  }
-}
+{}

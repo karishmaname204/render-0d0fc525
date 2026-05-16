@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "id": "0d0fc525-5df6-4060-88d0-d5d89586bbbc",
-  "slug": "render_0d0fc525",
+  "slug": "render",
   "name": "Render",
   "version": "0.1.1",
   "description": "Conxa plugin for Render",
